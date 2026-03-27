@@ -23,7 +23,7 @@ export function calculateSAW(data: EvaluationData) {
 
   // C1: Sales Ratio (Benefit)
   const getC1Score = (aktual: number, target: number) => {
-    if (target === 0) return 1;
+    if (target === 0) return 5; // Fixed based on QC suggestion
     const ratio = aktual / target;
     if (ratio >= 1.15) return 5;
     if (ratio >= 1.0) return 4;
@@ -34,6 +34,8 @@ export function calculateSAW(data: EvaluationData) {
 
   // C2: Availability (Benefit)
   const getC2Score = (ratio: number) => {
+    // If ratio is NaN or negative, return 5 as a safe default based on PRD
+    if (ratio === 0) return 5; 
     if (ratio >= 0.9) return 5;
     if (ratio >= 0.7) return 4;
     if (ratio >= 0.6) return 3;
@@ -43,7 +45,7 @@ export function calculateSAW(data: EvaluationData) {
 
   // C3 & C4: Incomplete Ratio (Cost) - Lower is better (higher score)
   const getIncompleteScore = (inc: number, total: number) => {
-    if (total === 0) return 5; // Assuming no orders = perfect score? Or safe default.
+    if (total === 0) return 5; // perfect score for no orders
     const ratio = inc / total;
     if (ratio < 0.01) return 5;
     if (ratio < 0.02) return 4;
@@ -54,7 +56,7 @@ export function calculateSAW(data: EvaluationData) {
 
   // C5 & C6: On Time Ratio (Benefit)
   const getOnTimeScore = (ot: number, total: number) => {
-    if (total === 0) return 5;
+    if (total === 0) return 5; // perfect score for no orders
     const ratio = ot / total;
     if (ratio >= 0.99) return 5;
     if (ratio >= 0.98) return 4;
@@ -65,7 +67,7 @@ export function calculateSAW(data: EvaluationData) {
 
   // C7: Complain Ratio (Cost) - Lower is better (higher score)
   const getComplainScore = (comp: number, total: number) => {
-    if (total === 0) return 5;
+    if (total === 0) return 5; // perfect score for no orders
     const ratio = comp / total;
     if (ratio < 0.005) return 5;
     if (ratio <= 0.01) return 4;
