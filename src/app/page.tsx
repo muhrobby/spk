@@ -3,15 +3,7 @@ import { toko, penilaian } from "@/db/schema";
 import { calculateSAW } from "@/lib/saw-calculator";
 import { eq, desc } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import DashboardTable from "@/components/DashboardTable";
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -50,6 +42,7 @@ export default async function Home(props: { searchParams: SearchParams }) {
         id: item.penilaian.id, // Using penilaian.id guarantees uniqueness
         nama_toko: item.nama_toko,
         score,
+        raw_data: item.penilaian,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -63,11 +56,6 @@ export default async function Home(props: { searchParams: SearchParams }) {
     : 0;
   const bestStore = scoredData[0]?.nama_toko || "-";
 
-  const getBadgeColor = (score: number) => {
-    if (score >= 80) return "bg-green-500 hover:bg-green-600";
-    if (score >= 60) return "bg-yellow-500 hover:bg-yellow-600 text-black";
-    return "bg-red-500 hover:bg-red-600";
-  };
 
   return (
     <div className="space-y-6">
@@ -98,42 +86,7 @@ export default async function Home(props: { searchParams: SearchParams }) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Peringkat Kinerja Toko (SAW)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">Rank</TableHead>
-                <TableHead>Nama Toko</TableHead>
-                <TableHead className="text-right">Skor Akhir</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {scoredData.map((item, index) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">#{index + 1}</TableCell>
-                  <TableCell>{item.nama_toko}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge className={getBadgeColor(item.score)}>
-                      {item.score}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {scoredData.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    Belum ada data penilaian untuk periode ini.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <DashboardTable data={scoredData} />
     </div>
   );
 }
