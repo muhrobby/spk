@@ -1,65 +1,125 @@
-import Image from "next/image";
+import { db } from "@/db";
+import { toko, penilaian } from "@/db/schema";
+import { calculateSAW } from "@/lib/saw-calculator";
+import { eq, desc } from "drizzle-orm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
-export default function Home() {
+export default async function Home() {
+  const periode = "2024-03";
+
+  // Fetch all stores and their evaluations for the current period
+  const data = await db
+    .select({
+      id: toko.id,
+      nama_toko: toko.nama_toko,
+      penilaian: penilaian,
+    })
+    .from(toko)
+    .leftJoin(penilaian, eq(toko.id, penilaian.toko_id))
+    .where(eq(penilaian.periode, periode));
+
+  // Process data with SAW calculation
+  const scoredData = data
+    .map((item) => {
+      if (!item.penilaian) return null;
+      const { score } = calculateSAW(item.penilaian);
+      return {
+        id: item.id,
+        nama_toko: item.nama_toko,
+        score,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => b.score - a.score);
+
+  const totalToko = scoredData.length;
+  const avgScore = totalToko
+    ? (scoredData.reduce((acc, curr) => acc + curr.score, 0) / totalToko).toFixed(
+        1
+      )
+    : 0;
+  const bestStore = scoredData[0]?.nama_toko || "-";
+
+  const getBadgeColor = (score: number) => {
+    if (score >= 80) return "bg-green-500 hover:bg-green-600";
+    if (score >= 60) return "bg-yellow-500 hover:bg-yellow-600 text-black";
+    return "bg-red-500 hover:bg-red-600";
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Toko</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalToko} Toko</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rata-rata Nilai</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgScore}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Toko Terbaik</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{bestStore}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Peringkat Kinerja Toko (SAW)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20">Rank</TableHead>
+                <TableHead>Nama Toko</TableHead>
+                <TableHead className="text-right">Skor Akhir</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {scoredData.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">#{index + 1}</TableCell>
+                  <TableCell>{item.nama_toko}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge className={getBadgeColor(item.score)}>
+                      {item.score}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {scoredData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    Belum ada data penilaian untuk periode ini.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

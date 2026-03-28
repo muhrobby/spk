@@ -1,8 +1,12 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 export const toko = sqliteTable("toko", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   nama_toko: text("nama_toko").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
 });
 
 export const penilaian = sqliteTable("penilaian", {
@@ -38,4 +42,8 @@ export const penilaian = sqliteTable("penilaian", {
   // C7 - Tingkat Komplain
   complain_total: integer("complain_total").notNull().default(0),
   total_shopee_complain: integer("total_shopee_complain").notNull().default(0),
+
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
 });
