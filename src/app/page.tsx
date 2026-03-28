@@ -13,8 +13,22 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-export default async function Home() {
-  const periode = "2024-03";
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function Home(props: { searchParams: SearchParams }) {
+  const searchParams = await props.searchParams;
+  
+  // Get all available periods to determine the latest one as fallback
+  const availablePeriodsData = await db
+    .select({ periode: penilaian.periode })
+    .from(penilaian)
+    .groupBy(penilaian.periode)
+    .orderBy(desc(penilaian.periode));
+    
+  const latestPeriode = availablePeriodsData.length > 0 ? availablePeriodsData[0].periode : "2024-03";
+  
+  // Use URL param if exists, otherwise fallback to latest
+  const periode = (searchParams?.periode as string) || latestPeriode;
 
   // Fetch all stores and their evaluations for the current period
   const data = await db
@@ -33,7 +47,7 @@ export default async function Home() {
       if (!item.penilaian) return null;
       const { score } = calculateSAW(item.penilaian);
       return {
-        id: item.id,
+        id: item.penilaian.id, // Using penilaian.id guarantees uniqueness
         nama_toko: item.nama_toko,
         score,
       };

@@ -3,6 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { LayoutDashboard, Store, ClipboardPen, Menu } from "lucide-react";
+import { db } from "@/db";
+import { penilaian } from "@/db/schema";
+import { desc } from "drizzle-orm";
+import MonthFilter from "@/components/MonthFilter";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,14 +16,23 @@ export const metadata: Metadata = {
   description: "Dashboard Evaluasi Kinerja Toko menggunakan Metode SAW",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Ambil semua periode unik dari database, urutkan terbaru
+  const dbPeriode = await db
+    .select({ periode: penilaian.periode })
+    .from(penilaian)
+    .groupBy(penilaian.periode)
+    .orderBy(desc(penilaian.periode));
+
+  const availablePeriode = dbPeriode.map((p) => p.periode);
+
   return (
-    <html lang="id">
-      <body className={`${inter.className} min-h-screen bg-zinc-50`}>
+    <html lang="id" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen bg-zinc-50`} suppressHydrationWarning>
         <div className="flex min-h-screen">
           {/* Sidebar */}
           <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r bg-white md:flex">
@@ -63,11 +77,9 @@ export default function RootLayout({
                 </h1>
               </div>
               <div className="flex items-center gap-4">
-                <select className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm outline-none ring-zinc-500 focus:ring-1">
-                  <option value="2024-03">Maret 2024</option>
-                  <option value="2024-02">Februari 2024</option>
-                  <option value="2024-01">Januari 2024</option>
-                </select>
+                <Suspense fallback={<div className="h-8 w-32 bg-zinc-200 animate-pulse rounded-md" />}>
+                  <MonthFilter availablePeriode={availablePeriode} />
+                </Suspense>
               </div>
             </header>
 
