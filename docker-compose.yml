@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      secrets:
+        - app_env
     image: spk-app:latest
     container_name: spk-app
     restart: unless-stopped
@@ -23,3 +25,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+secrets:
+  app_env:
+    file: .env

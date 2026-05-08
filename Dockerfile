@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 FROM node:22-alpine AS base
 
 FROM base AS deps
@@ -10,7 +12,12 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN --mount=type=secret,id=app_env \
+  set -a; \
+  . /run/secrets/app_env; \
+  set +a; \
+  export NODE_ENV=production; \
+  npm run build
 
 FROM base AS runner
 WORKDIR /app
