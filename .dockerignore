@@ -1,0 +1,13 @@
+.env
+.env*.local
+.git
+.github
+.husky
+.next
+.vercel
+.worktrees
+coverage
+docs
+node_modules
+npm-debug.log*
+README.md
