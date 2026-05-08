@@ -15,7 +15,7 @@
     "db:studio": "drizzle-kit studio --config drizzle.config.ts",
     "db:seed": "ts-node -P tsconfig.scripts.json src/db/seed/criteria-weights.seed.ts",
     "db:seed:admin": "ts-node -P tsconfig.scripts.json src/db/seed/admin-user.seed.ts",
-    "prepare": "husky",
+    "prepare": "node -e \"if (process.env.CI || process.env.NODE_ENV === 'production') process.exit(0); require('child_process').execFileSync('husky', { stdio: 'inherit' })\"",
     "generate:presets": "ts-node -P tsconfig.scripts.json src/scripts/generate-theme-presets.ts"
   },
   "lint-staged": {
