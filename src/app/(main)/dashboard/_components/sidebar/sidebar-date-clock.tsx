@@ -60,6 +60,21 @@ export function SidebarDateClock() {
           </div>
           <span className="font-mono font-semibold text-sm tabular-nums">{timeLabel}</span>
         </div>
+
+        <div className="space-y-1 rounded-lg border bg-muted/20 p-3 text-xs">
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">Nama</span>
+            <span className="text-right font-medium">Muhammad Robby</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">NIM</span>
+            <span className="font-medium font-mono">231011400132</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">Kelas</span>
+            <span className="font-medium">06TPLE003</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
