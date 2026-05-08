@@ -24,38 +24,64 @@
 - Zustand
 - shadcn/ui
 
-## Quick Start
+## Prasyarat
 
-1. Install dependencies:
+- Node.js 22 atau lebih baru
+- npm 10 atau lebih baru
+- PostgreSQL, bisa lokal, Supabase, atau service PostgreSQL lain
+- Docker dan Docker Compose, hanya jika ingin deploy via container di VPS
+
+## Quick Start Lokal
+
+1. Clone repository:
+   ```bash
+   git clone https://github.com/muhrobby/spk.git
+   cd spk
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Copy environment file:
+3. Copy environment file:
    ```bash
    cp .env.example .env
    ```
 
-3. Isi environment variable berikut:
-   - `DATABASE_URL`: connection string PostgreSQL
-   - `BETTER_AUTH_SECRET`: secret auth, generate dengan `openssl rand -hex 32`
-   - `BETTER_AUTH_URL`: URL aplikasi, contoh `http://localhost:3000`
+4. Isi file `.env`:
+   ```env
+   DATABASE_URL="postgresql://user:password@host:port/database"
+   BETTER_AUTH_SECRET="generate-dengan-openssl-rand-hex-32"
+   BETTER_AUTH_URL="http://localhost:3000"
+   NODE_ENV="development"
+   N8N_RANKING_WEBHOOK_URL=""
+   ```
 
-4. Generate dan migrasi database:
+5. Generate secret auth jika belum punya:
    ```bash
-   npm run db:generate
+   openssl rand -hex 32
+   ```
+
+6. Jalankan migrasi database:
+   ```bash
    npm run db:migrate
    ```
 
-5. Seed data awal:
+7. Seed data awal:
    ```bash
    npm run db:seed
    npm run db:seed:admin
    ```
 
-6. Jalankan aplikasi:
+8. Jalankan development server:
    ```bash
    npm run dev
+   ```
+
+9. Buka aplikasi:
+   ```text
+   http://localhost:3000
    ```
 
 ## Akun Demo
@@ -80,6 +106,18 @@ Setelah seed admin dijalankan, gunakan akun berikut:
 | `npm run db:studio` | Buka Drizzle Studio |
 | `npm run db:seed` | Seed bobot kriteria default |
 | `npm run db:seed:admin` | Seed admin demo |
+
+## Environment Variables
+
+| Variable | Wajib | Keterangan |
+| --- | --- | --- |
+| `DATABASE_URL` | Ya | Connection string PostgreSQL |
+| `BETTER_AUTH_SECRET` | Ya | Secret untuk Better Auth, gunakan `openssl rand -hex 32` |
+| `BETTER_AUTH_URL` | Ya | Base URL aplikasi, contoh lokal `http://localhost:3000` |
+| `NODE_ENV` | Ya | Gunakan `development` untuk lokal dan `production` untuk deploy |
+| `N8N_RANKING_WEBHOOK_URL` | Tidak | Webhook untuk pengiriman email ranking jika fitur email digunakan |
+
+Jangan commit file `.env`. File tersebut sudah di-ignore oleh git.
 
 ## Struktur Proyek
 
@@ -118,11 +156,122 @@ docker run --name spk-postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=spk 
 
 Lalu set `DATABASE_URL=postgresql://postgres:password@localhost:5432/spk` di file `.env`.
 
+## Build Production Lokal
+
+Jalankan perintah berikut sebelum deploy untuk memastikan aplikasi bisa dibuild:
+
+```bash
+npm run lint
+npm run build
+```
+
+Setelah build berhasil, jalankan production server:
+
+```bash
+npm run start
+```
+
+## Deploy ke Vercel
+
+1. Push repository ke GitHub.
+2. Import project di Vercel.
+3. Set environment variables di Vercel Project Settings:
+   ```text
+   DATABASE_URL
+   BETTER_AUTH_SECRET
+   BETTER_AUTH_URL
+   N8N_RANKING_WEBHOOK_URL
+   ```
+4. Pastikan `BETTER_AUTH_URL` memakai domain production, contoh:
+   ```text
+   https://nama-domain.vercel.app
+   ```
+5. Deploy dari dashboard Vercel.
+
+Project ini memakai `vercel.json` dengan install command:
+
+```bash
+npm ci --include=dev
+```
+
+Dev dependencies tetap diinstall saat build karena Next.js membutuhkan toolchain seperti Tailwind/PostCSS dan TypeScript.
+
+## Deploy ke VPS dengan Docker Compose
+
+1. Clone repository di VPS:
+   ```bash
+   git clone https://github.com/muhrobby/spk.git
+   cd spk
+   ```
+
+2. Buat file `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Isi `.env` untuk production:
+   ```env
+   DATABASE_URL="postgresql://user:password@host:port/database"
+   BETTER_AUTH_SECRET="secret-production"
+   BETTER_AUTH_URL="http://IP-VPS:3010"
+   NODE_ENV="production"
+   N8N_RANKING_WEBHOOK_URL=""
+   ```
+
+4. Build dan jalankan container:
+   ```bash
+   docker compose up -d --build
+   ```
+
+5. Cek logs:
+   ```bash
+   docker compose logs -f spk-app
+   ```
+
+6. Akses aplikasi:
+   ```text
+   http://IP-VPS:3010
+   ```
+
+Konfigurasi Docker Compose saat ini:
+
+| Setting | Nilai |
+| --- | --- |
+| Port | `3010:3010` |
+| Memory limit | `512m` |
+| Swap limit | `512m` |
+| CPU limit | `1.0` |
+| Restart policy | `unless-stopped` |
+
+Build Docker membutuhkan `.env` karena Next.js membaca konfigurasi auth dan database saat build. Secret dibaca memakai BuildKit secret sehingga tidak disalin ke image layer.
+
+## Update Deploy di VPS
+
+Untuk update aplikasi setelah ada perubahan di GitHub:
+
+```bash
+git pull origin main
+docker compose up -d --build
+```
+
+Untuk restart tanpa rebuild:
+
+```bash
+docker compose restart spk-app
+```
+
+Untuk menghentikan container:
+
+```bash
+docker compose down
+```
+
 ## Catatan
 
 - Folder `src/app/(main)/auth` berisi alur login dan layout autentikasi.
 - Demo account ditampilkan di halaman login agar mudah testing lokal.
 - `npm run build` menggunakan Next.js 16 dan Turbopack.
+- Jika deploy gagal karena environment variable kosong, pastikan `.env` lokal, Vercel Environment Variables, atau env di VPS sudah diisi.
 
 ## Kontribusi
 
