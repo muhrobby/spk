@@ -1,0 +1,32 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "nodeVersion": "20.x",
+  "env": [
+    {
+      "key": "DATABASE_URL",
+      "description": "PostgreSQL connection string for Supabase",
+      "value": "",
+      "type": "secret"
+    },
+    {
+      "key": "BETTER_AUTH_SECRET",
+      "description": "Secret key for Better Auth (generate with: openssl rand -hex 32)",
+      "value": "",
+      "type": "secret"
+    },
+    {
+      "key": "BETTER_AUTH_URL",
+      "description": "Base URL of the application (e.g., https://yourdomain.com)",
+      "value": "",
+      "type": "secret"
+    },
+    {
+      "key": "NODE_ENV",
+      "description": "Node environment",
+      "value": "production"
+    }
+  ]
+}
