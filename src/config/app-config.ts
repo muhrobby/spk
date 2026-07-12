@@ -3,7 +3,7 @@ import packageJson from "../../package.json";
 const currentYear = new Date().getFullYear();
 
 export const APP_CONFIG = {
-  name: "SPK Performance Toko",
+  name: "SPK Performance Toko-Muhammad robby",
   version: packageJson.version,
   copyright: `© ${currentYear}, Studio Admin.`,
   meta: {
